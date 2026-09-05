@@ -1,8 +1,10 @@
+import { Clock3, Instagram, MapPin } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import BannerCarousel from '../components/BannerCarousel'
 import ProductCard from '../components/ProductCard'
 import StoreLocation from '../components/StoreLocation'
 import { listProducts } from '../lib/products'
+import { INSTAGRAM_URL } from '../lib/store'
 import type { Product } from '../types'
 
 const categories = [
@@ -37,7 +39,7 @@ export default function Home() {
     <>
       <BannerCarousel />
 
-      <section className="intro">
+      <section className="intro home-section home-section-intro">
         <div className="container intro-grid">
           <div>
             <span className="eyebrow">
@@ -58,56 +60,80 @@ export default function Home() {
         </div>
       </section>
 
-      <section
-        id="produtos"
-        className="section container"
-      >
-        <div className="section-heading">
-          <div>
-            <span className="eyebrow">
-              Vitrine
-            </span>
-
-            <h2>
-              Achadinhos esperando por você
-            </h2>
+      <section className="quick-info-section" aria-label="Informações rápidas da loja">
+        <div className="container quick-info-grid">
+          <div className="quick-info-item">
+            <Clock3 size={24} />
+            <div>
+              <strong>Horário da loja física</strong>
+              <span>Ter/Qua 10:30–18h • Qui/Sex 10–18h • Sáb 9–13h</span>
+            </div>
           </div>
 
-          <div className="filters">
-            {categories.map((item) => (
-              <button
-                key={item}
-                className={
-                  item === category
-                    ? 'filter active'
-                    : 'filter'
-                }
-                onClick={() => setCategory(item)}
-              >
-                {item}
-              </button>
-            ))}
-          </div>
+          <a className="quick-info-item" href="/#loja">
+            <MapPin size={24} />
+            <div>
+              <strong>Visite no Catete</strong>
+              <span>Rua Bento Lisboa, 151 • Rio de Janeiro</span>
+            </div>
+          </a>
+
+          <a className="quick-info-item quick-info-instagram" href={INSTAGRAM_URL} target="_blank" rel="noreferrer">
+            <Instagram size={24} />
+            <div>
+              <strong>Novidades no Instagram</strong>
+              <span>Siga @brecholuzdoluarrj</span>
+            </div>
+          </a>
         </div>
-
-        {loading ? (
-          <p>Carregando peças...</p>
-        ) : (
-          <div className="product-grid">
-            {filtered.map((product) => (
-              <ProductCard
-                key={product.id}
-                product={product}
-              />
-            ))}
-          </div>
-        )}
       </section>
 
-      <section
-        id="sobre"
-        className="sustainability"
-      >
+      <section id="produtos" className="home-products home-section">
+        <div className="container section">
+          <div className="section-heading">
+            <div>
+              <span className="eyebrow">
+                Vitrine
+              </span>
+
+              <h2>
+                Achadinhos esperando por você
+              </h2>
+            </div>
+
+            <div className="filters">
+              {categories.map((item) => (
+                <button
+                  key={item}
+                  className={
+                    item === category
+                      ? 'filter active'
+                      : 'filter'
+                  }
+                  onClick={() => setCategory(item)}
+                >
+                  {item}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {loading ? (
+            <p>Carregando peças...</p>
+          ) : (
+            <div className="product-grid">
+              {filtered.map((product) => (
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+
+      <section id="sobre" className="sustainability home-section">
         <div className="container sustainability-grid">
           <img
             src="/assets/logo-claro.png"

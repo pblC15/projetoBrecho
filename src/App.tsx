@@ -1,9 +1,10 @@
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
-import Header from './components/Header'
+import FloatingWhatsApp from './components/FloatingWhatsApp'
 import Footer from './components/Footer'
+import Header from './components/Header'
+import Admin from './pages/Admin'
 import Home from './pages/Home'
 import ProductPage from './pages/ProductPage'
-import Admin from './pages/Admin'
 
 export default function App() {
   return (
@@ -15,6 +16,7 @@ export default function App() {
         <Route path="/admin" element={<Admin />} />
       </Routes>
       <Footer />
+      <FloatingWhatsApp />
     </BrowserRouter>
   )
 }

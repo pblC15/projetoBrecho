@@ -1,3 +1,6 @@
+import { Clock3, Instagram } from 'lucide-react'
+import { INSTAGRAM_URL } from '../lib/store'
+
 const storePhotos = [
   {
     src: '/assets/loja/interior-01.jpeg',
@@ -80,6 +83,14 @@ export default function StoreLocation() {
               primeiro ao site.
             </p>
 
+            <div className="store-hours-card">
+              <Clock3 size={20} />
+              <div>
+                <strong>Horário de funcionamento</strong>
+                <span>Ter/Qua 10:30–18h • Qui/Sex 10–18h • Sáb 9–13h • Dom fechado</span>
+              </div>
+            </div>
+
             <div className="store-benefits">
               <div>
                 <span>✦</span>
@@ -106,15 +117,27 @@ export default function StoreLocation() {
               </div>
             </div>
 
-            <a
-              href={mapsUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="store-route-button"
-            >
-              <span>📍</span>
-              Traçar rota até a loja
-            </a>
+            <div className="store-action-stack">
+              <a
+                href={mapsUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="store-route-button"
+              >
+                <span>📍</span>
+                Traçar rota até a loja
+              </a>
+
+              <a
+                href={INSTAGRAM_URL}
+                target="_blank"
+                rel="noreferrer"
+                className="store-instagram-button"
+              >
+                <Instagram size={18} />
+                Ver novidades no Instagram
+              </a>
+            </div>
           </div>
         </div>
 

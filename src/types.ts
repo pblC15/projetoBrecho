@@ -7,16 +7,11 @@ export type Product = {
   size?: string
   measurements?: string
   condition?: string
-
-  // Imagem principal
   imageUrl: string
-
-  // Galeria, máximo 5
   imageUrls?: string[]
-
+  videoUrls?: string[]
   featured?: boolean
   sold?: boolean
-
   createdAt?: unknown
   updatedAt?: unknown
 }
