@@ -1,13 +1,21 @@
 import { Clock3, Instagram, MapPin, MessageCircle } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import { useCatalog } from '../hooks/useCatalog'
+import { categoryUrl, scrollToTop } from '../lib/navigation'
 import { INSTAGRAM_URL, STORE_HOURS, WHATSAPP_URL } from '../lib/store'
 
+const FOOTER_VISIBLE_CATEGORIES = 6
+
 export default function Footer() {
+  const { categories } = useCatalog()
+
   return (
     <footer className="footer" id="contato">
       <div className="container footer-grid">
         <div className="footer-brand-block">
-          <img className="footer-logo" src="/assets/logo-anexo-transparente.png" alt="Brechó Luz do Luar" />
+          <Link to="/" onClick={scrollToTop} aria-label="Ir para o topo da página inicial">
+            <img className="footer-logo" src="/assets/logo-anexo-transparente.png" alt="Brechó Luz do Luar" />
+          </Link>
           <p className="footer-copy">
             Peças com história, novas histórias para vestir. Reutilize, reinvente e faça a moda circular girar.
           </p>
@@ -19,7 +27,7 @@ export default function Footer() {
 
         <div>
           <h3>Menu</h3>
-          <a href="/">Início</a>
+          <Link to="/" onClick={scrollToTop}>Início</Link>
           <a href="/#produtos">Produtos</a>
           <a href="/#sobre">Sobre</a>
           <a href="/#loja">Loja física</a>
@@ -28,11 +36,12 @@ export default function Footer() {
 
         <div>
           <h3>Categorias</h3>
-          <a href="/#produtos">Vestidos</a>
-          <a href="/#produtos">Blusas</a>
-          <a href="/#produtos">Calças</a>
-          <a href="/#produtos">Casacos</a>
-          <a href="/#produtos">Acessórios</a>
+          {categories.slice(0, FOOTER_VISIBLE_CATEGORIES).map((category) => (
+            <Link key={category.id} to={categoryUrl(category.name)}>{category.name}</Link>
+          ))}
+          {categories.length > FOOTER_VISIBLE_CATEGORIES && (
+            <a href="/#produtos">Ver todas</a>
+          )}
         </div>
 
         <div className="footer-service">
@@ -47,7 +56,16 @@ export default function Footer() {
           </div>
         </div>
       </div>
-      <div className="copyright">© {new Date().getFullYear()} Brechó Luz do Luar.</div>
+
+      <div className="copyright">
+        <span>© {new Date().getFullYear()} Brechó Luz do Luar. Todos os direitos reservados.</span>
+        <span className="footer-credit">
+          Site criado por{' '}
+          <a href="https://agenciagoolbe.site" target="_blank" rel="noopener noreferrer" title="Agência Goolbe">
+            AG (Agência Goolbe)
+          </a>
+        </span>
+      </div>
     </footer>
   )
 }

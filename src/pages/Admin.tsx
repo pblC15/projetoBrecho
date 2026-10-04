@@ -1,10 +1,12 @@
-import { ChangeEvent, FormEvent, useEffect, useState } from 'react'
+import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from 'react'
 import { onAuthStateChanged, signInWithEmailAndPassword, signOut, type User } from 'firebase/auth'
-import { ArrowDown, ArrowUp, Edit, GripVertical, Plus, Trash2, Video, X } from 'lucide-react'
+import { ArrowDown, ArrowUp, CalendarDays, Edit, GripVertical, Package, Plus, Trash2, Video, X } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { auth, firebaseEnabled } from '../lib/firebase'
 import { createProduct, deleteProduct, listProducts, updateProduct, type ProductImageInput } from '../lib/products'
 import { createCategory, deleteCategory, listCategories, updateCategory } from '../lib/categories'
+import { invalidateCatalog } from '../lib/catalog'
+import { formatDate, formatDateTime } from '../lib/dates'
 import type { Category, Product } from '../types'
 
 type AdminTab = 'products' | 'categories'
@@ -40,6 +42,13 @@ export default function Admin() {
   const [draggedImageIndex, setDraggedImageIndex] = useState<number | null>(null)
   const [categoryName, setCategoryName] = useState('')
   const [editingCategory, setEditingCategory] = useState<Category | null>(null)
+
+  /* Quantidade de produtos cadastrados em cada categoria */
+  const productCountByCategory = useMemo(() => {
+    const counts = new Map<string, number>()
+    products.forEach((product) => counts.set(product.category, (counts.get(product.category) || 0) + 1))
+    return counts
+  }, [products])
 
   useEffect(() => onAuthStateChanged(auth, setUser), [])
   useEffect(() => { if (user) void loadData() }, [user])
@@ -258,6 +267,7 @@ export default function Admin() {
 
       resetMedia()
       setEditingProduct(null)
+      invalidateCatalog()
       await loadData()
       setProductMode('list')
     } catch (error) {
@@ -273,6 +283,7 @@ export default function Admin() {
     try {
       await deleteProduct(product.id)
       setProducts((current) => current.filter((item) => item.id !== product.id))
+      invalidateCatalog()
       setMessage('Produto excluído com sucesso.')
     } catch (error) {
       console.error(error)
@@ -294,7 +305,9 @@ export default function Admin() {
       }
       setCategoryName('')
       setEditingCategory(null)
-      setCategories(await listCategories())
+      invalidateCatalog()
+      /* Recarrega produtos também, pois renomear a categoria atualiza os produtos vinculados */
+      await loadData()
     } catch (error) {
       console.error(error)
       setMessage(error instanceof Error ? error.message : 'Erro ao salvar categoria.')
@@ -304,18 +317,20 @@ export default function Admin() {
   }
 
   async function handleDeleteCategory(category: Category) {
-    if (products.some((product) => product.category === category.name)) {
-      setMessage(`A categoria "${category.name}" não pode ser excluída porque existem produtos usando ela.`)
+    const total = productCountByCategory.get(category.name) || 0
+    if (total > 0) {
+      setMessage(`A categoria "${category.name}" não pode ser excluída porque possui ${total} produto${total === 1 ? '' : 's'} cadastrado${total === 1 ? '' : 's'}. Mova ou exclua os produtos antes.`)
       return
     }
     if (!window.confirm(`Excluir a categoria "${category.name}"?`)) return
     try {
       await deleteCategory(category.id)
       setCategories((current) => current.filter((item) => item.id !== category.id))
+      invalidateCatalog()
       setMessage('Categoria excluída com sucesso.')
     } catch (error) {
       console.error(error)
-      setMessage('Não foi possível excluir a categoria.')
+      setMessage(error instanceof Error ? error.message : 'Não foi possível excluir a categoria.')
     }
   }
 
@@ -367,7 +382,12 @@ export default function Admin() {
                     <div key={product.id} className="admin-product-card">
                       <Link to={`/produto/${product.id}`} className="admin-product-clickable" title={`Ver ${product.name}`}>
                         <img src={product.imageUrl} alt={product.name} />
-                        <div className="admin-product-info"><span>{product.category}</span><strong>{product.name}</strong><small>{money.format(product.price)}</small></div>
+                        <div className="admin-product-info">
+                          <span>{product.category}</span>
+                          <strong>{product.name}</strong>
+                          <small>{money.format(product.price)}</small>
+                          <small className="admin-product-date"><CalendarDays size={13} />Publicado em {formatDateTime(product.createdAt)}</small>
+                        </div>
                         <div className="admin-product-status"><span className={`admin-status ${product.sold ? 'sold' : 'available'}`}>{product.sold ? 'Vendido' : 'Disponível'}</span></div>
                       </Link>
                       <div className="admin-product-actions">
@@ -384,6 +404,17 @@ export default function Admin() {
           {(productMode === 'create' || productMode === 'edit') && (
             <section>
               <div className="admin-section-header"><h2>{productMode === 'edit' ? 'Editar produto' : 'Cadastrar produto'}</h2><button type="button" className="text-button" onClick={cancelProductForm}>Voltar</button></div>
+
+              {productMode === 'edit' && editingProduct && (
+                <div className="admin-publish-info">
+                  <CalendarDays size={18} />
+                  <div>
+                    <span>Data de publicação: <strong>{formatDateTime(editingProduct.createdAt)}</strong></span>
+                    {editingProduct.updatedAt != null && <small>Última atualização: {formatDateTime(editingProduct.updatedAt)}</small>}
+                    <small>Visível apenas na área administrativa.</small>
+                  </div>
+                </div>
+              )}
 
               <form className="admin-form" onSubmit={submitProduct}>
                 <label>Nome do produto<input name="name" defaultValue={editingProduct?.name || ''} required /></label>
@@ -449,22 +480,44 @@ export default function Admin() {
         </>
       ) : (
         <section>
-          <div className="admin-section-header"><div><h2>Categorias</h2><p>Organize os produtos da loja.</p></div></div>
+          <div className="admin-section-header"><div><h2>Categorias</h2><p>{categories.length} categoria{categories.length === 1 ? '' : 's'} • Categorias com produtos não podem ser excluídas.</p></div></div>
           <form className="category-form" onSubmit={submitCategory}>
             <input value={categoryName} onChange={(e) => setCategoryName(e.target.value)} placeholder="Nome da categoria" required />
             <button className="primary-button" disabled={saving}>{editingCategory ? 'Salvar' : 'Adicionar'}</button>
             {editingCategory && <button type="button" className="text-button" onClick={() => { setEditingCategory(null); setCategoryName('') }}>Cancelar</button>}
           </form>
           <div className="category-list">
-            {categories.map((category) => (
-              <div key={category.id} className="category-item">
-                <strong>{category.name}</strong>
-                <div>
-                  <button type="button" className="admin-action-button" onClick={() => { setEditingCategory(category); setCategoryName(category.name); setMessage('') }}><Edit size={16} />Editar</button>
-                  <button type="button" className="admin-action-button danger" onClick={() => handleDeleteCategory(category)}><Trash2 size={16} />Excluir</button>
+            {!categories.length && <div className="notice">Nenhuma categoria cadastrada.</div>}
+            {categories.map((category) => {
+              const total = productCountByCategory.get(category.name) || 0
+              const locked = total > 0
+
+              return (
+                <div key={category.id} className="category-item">
+                  <div className="category-item-info">
+                    <strong>{category.name}</strong>
+                    <div className="category-item-meta">
+                      <span><CalendarDays size={14} />Cadastrada em {formatDate(category.createdAt)}</span>
+                      <span className={locked ? 'category-count has-products' : 'category-count'}>
+                        <Package size={14} />{total} produto{total === 1 ? '' : 's'} cadastrado{total === 1 ? '' : 's'}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="category-item-actions">
+                    <button type="button" className="admin-action-button" onClick={() => { setEditingCategory(category); setCategoryName(category.name); setMessage('') }}><Edit size={16} />Editar</button>
+                    <button
+                      type="button"
+                      className="admin-action-button danger"
+                      onClick={() => handleDeleteCategory(category)}
+                      disabled={locked}
+                      title={locked ? 'Não é possível excluir: existem produtos nesta categoria.' : 'Excluir categoria'}
+                    >
+                      <Trash2 size={16} />Excluir
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </section>
       )}

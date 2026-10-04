@@ -2,6 +2,9 @@ import { onAuthStateChanged } from 'firebase/auth'
 import { ArrowLeft, Instagram, MessageCircle, Ruler, Sparkles, ZoomIn, X } from 'lucide-react'
 import { useEffect, useMemo, useState, type PointerEvent } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import RecentProductsCarousel from '../components/RecentProductsCarousel'
+import { useCatalog } from '../hooks/useCatalog'
+import { getRecentProducts } from '../lib/catalog'
 import { auth } from '../lib/firebase'
 import { getProduct } from '../lib/products'
 import { INSTAGRAM_URL } from '../lib/store'
@@ -18,15 +21,27 @@ export default function ProductPage() {
   const [zoomOpen, setZoomOpen] = useState(false)
   const [zoomPosition, setZoomPosition] = useState({ x: 50, y: 50 })
   const [isAdmin, setIsAdmin] = useState(false)
+  const { products: catalogProducts, loading: catalogLoading } = useCatalog()
+
+  /* Produtos recentes, sem repetir a peça que está aberta */
+  const recentProducts = useMemo(
+    () => getRecentProducts(catalogProducts, 5, id),
+    [catalogProducts, id]
+  )
 
   useEffect(() => onAuthStateChanged(auth, (user) => setIsAdmin(Boolean(user))), [])
 
   useEffect(() => {
+    /* Ao abrir outra peça (ex.: pelo carrossel), volta ao topo da página */
+    window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior })
+    setZoomOpen(false)
+
     if (!id) {
       setLoading(false)
       return
     }
 
+    setLoading(true)
     getProduct(id)
       .then((found) => {
         setProduct(found)
@@ -138,6 +153,12 @@ export default function ProductPage() {
           <a href={INSTAGRAM_URL} target="_blank" rel="noreferrer" className="instagram-cta"><Instagram size={19} />Seguir @brecholuzdoluarrj</a>
         </div>
       </section>
+
+      <RecentProductsCarousel
+        products={recentProducts}
+        loading={catalogLoading}
+        className="product-recent-products"
+      />
 
       {zoomOpen && selectedImage && (
         <div className="zoom-modal" role="dialog" aria-modal="true" aria-label="Visualização ampliada da imagem">
