@@ -1,3 +1,4 @@
+import Seo from '../components/Seo'
 import { onAuthStateChanged } from 'firebase/auth'
 import { ArrowLeft, Instagram, MessageCircle, Ruler, Sparkles, ZoomIn, X } from 'lucide-react'
 import { useEffect, useMemo, useState, type PointerEvent } from 'react'
@@ -65,10 +66,11 @@ export default function ProductPage() {
   }
 
   if (loading) return <main className="container section"><p>Carregando produto...</p></main>
-  if (!product) return <main className="container section"><h1>Produto não encontrado.</h1></main>
+  if (!product) return <><Seo title="Produto não encontrado | Brechó Luz do Luar" description="Produto indisponível." noIndex /><main className="container section"><h1>Produto não encontrado.</h1></main></>
 
   return (
     <main className="product-page">
+      <Seo title={`${product.name} | Brechó Luz do Luar`} description={`${product.name}. ${product.description || `Peça selecionada do Brechó Luz do Luar no Catete, Rio de Janeiro.`}`.slice(0, 155)} path={`/produto/${encodeURIComponent(product.id)}`} image={product.imageUrls?.[0] || product.imageUrl} product={{ name: product.name, description: product.description || product.name, image: product.imageUrls?.[0] || product.imageUrl, price: product.price, sold: product.sold }} />
       <div className="container section product-section-shell">
         <div className="product-back-row">
           <Link className="back-link" to="/"><ArrowLeft size={18} />Voltar para a vitrine</Link>

@@ -1,3 +1,4 @@
+import Seo from '../components/Seo'
 import { Clock3, Instagram, MapPin } from 'lucide-react'
 import { useEffect, useMemo } from 'react'
 import { useLocation, useSearchParams } from 'react-router-dom'
@@ -54,6 +55,7 @@ export default function Home() {
 
   return (
     <>
+      <Seo title="Brechó Luz do Luar | Brechó Feminino no Catete, RJ" description="Brechó feminino no Catete, Rio de Janeiro. Roupas, bolsas, calçados e acessórios de marcas selecionadas, com peças únicas e atendimento pelo WhatsApp." />
       <BannerCarousel />
 
       <section className="quick-info-section" aria-label="Informações rápidas da loja">
